@@ -1,40 +1,33 @@
-# forever-slurm
-Use Traefik to keep highly available (web)services running forever on an HPC cluster managed by Slurm
+# Forever Slurm
+
+Use the Traefik proxy to keep (web) services highly available on Slurm-managed HPC clusters. (Web) services run as Slurm batch jobs that end when time expires, so user requests may fail unless other jobs take over. Traefik provides load balancing and failover for multiple identitical Slurm jobs. Since port numbers may vary across nodes, we use random ports stored in the Slurm job's comment field, enabling simple service discovery without the need for extra message queue or serice discovery software.
 
 
-```mermaid
-graph LR
-    subgraph Outside HPC
-        A[Web Server]
-    end
-    subgraph HPC Cluster
-        B[Login Node with Traefik<br/>(Port 13013)]
-        C[Worker HPC Node 1<br/>(Random Port X)]
-        D[Worker HPC Node 2<br/>(Random Port Y)]
-    end
-    A --|SSH Port Forwarding<br/>to Port 13013| B
-    B --|Load Balancing / Failover| C
-    B --|Load Balancing / Failover| D
-```
-
-
+## What does this look like ?
 
 ```mermaid
-graph LR
-    style A fill:#f9f,stroke:#333,stroke-width:4px
-    style B fill:#bbf,stroke:#333,stroke-width:4px
-    style C fill:#bfb,stroke:#333,stroke-width:2px
-    style D fill:#bfb,stroke:#333,stroke-width:2px
-
-    subgraph Outside HPC
-        A[Web Server]
+flowchart TD
+    websvr[Web Server - port 80/443 ] -->|port 13013/22| LB[HPC Login Node - Traefik]
+    subgraph Cluster[" "]
+        direction TB
+        LB -->|port x| Node1[HPC Node1]
+        LB -->|port y| Node2[HPC Node2]
     end
-    subgraph HPC Cluster
-        B[Login Node with Traefik<br/>(Port 13013)]
-        C[Worker HPC Node 1<br/>(Random Port X)]
-        D[Worker HPC Node 2<br/>(Random Port Y)]
-    end
-    A --|SSH Port Forwarding<br/>to Port 13013| B
-    B --|Load Balancing / Failover| C
-    B --|Load Balancing / Failover| D
 ```
+
+Traefik simply runs as a --user systemd service on the login node and the web server can either connect directly to the Traefik proxy or use a simple ssh port forwarding tunnel to the HPC login node 
+
+## Installing 
+
+login to your HPC system, clone the forever-slurm repository and run install.sh
+
+```
+git clone git@github.com:dirkpetersen/forever-slurm.git
+cd forever-slurm
+./install.sh 
+```
+
+If you have not setup ssh keys for github you can also clone it via https: `git clone https://github.com/dirkpetersen/forever-slurm.git`
+
+## Configuring 
+

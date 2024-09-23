@@ -1,3 +1,6 @@
+# working directory for forever-slurm
+.work/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
