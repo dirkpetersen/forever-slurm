@@ -7,7 +7,8 @@ if [[ ! -d "$(pwd)/.git" ]]; then
   echo "Error: The current directory is not the root of a Git repository."
   exit 1
 fi
- 
+
+export DBUS_SESSION_BUS_ADDRESS=${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/$(id -u)/bus}
 export FOREVER_ROOT=${FOREVER_ROOT:-$(pwd)}  # Normally the root of the forever-slurm git repo
 SYSTEMD_SERVICE_CONTENT=""
 
@@ -19,7 +20,6 @@ for arg in "$@"; do
     break
   fi
 done
-
 
 create_folders_files() {
   # create required folder and files 
@@ -241,6 +241,7 @@ activate_services() {
 }
 
 # Expected content of the systemd service file
+# you can also use StandardOutput=file:${LOGFILE_PATH} 
 SYSTEMD_TEMPLATE="[Unit]
 Description=%%SERVICE_DESCR%%
 After=network-online.target
@@ -249,7 +250,10 @@ Wants=network-online.target systemd-networkd-wait-online.service
 [Service]
 WorkingDirectory=%%SERVICE_WORKDIR%%
 ExecStart=%%SERVICE_CMDLINE%%
+StandardOutput=append:%%LOGFILE_PATH%%
+StandardError=append:%%LOGFILE_PATH%%
 Restart=on-abnormal
+KillMode=mixed
 
 [Install]
 WantedBy=default.target
@@ -262,11 +266,13 @@ get_systemd_content() {
   local service_cmdline="${1}"
   local service_workdir="${2}"
   local service_descr="${3}"
+  local service_name="${4}"
 
   # Replace each placeholder using bash parameter expansion
   template="${template//%%SERVICE_CMDLINE%%/${service_cmdline}}"
   template="${template//%%SERVICE_WORKDIR%%/${service_workdir}}"
   template="${template//%%SERVICE_DESCR%%/${service_descr}}"
+  template="${template//%%LOGFILE_PATH%%/${FOREVER_ROOT}/.work/log/${service_name}.service.log}"
 
   # Output the final systemd service content
   #echo "${template}"
@@ -275,8 +281,13 @@ get_systemd_content() {
 }
 
 setup_systemd_service() {
-  local service_name="${1// /-}"  # Replace spaces in service name with hyphens
+  local service_cmdline="${1}"
+  local service_workdir="${2}"
+  local service_descr="${3}"
+  local service_name="${4// /-}"  # Replace spaces in service name with hyphens
   local service_file="${HOME}/.config/systemd/user/${service_name}.service"
+
+  get_systemd_content "${service_cmdline}" "${service_workdir}" "${service_descr}" "${service_name}"
   
   # Ensure the user's systemd directory exists
   mkdir -p "${HOME}/.config/systemd/user"
@@ -300,6 +311,29 @@ setup_systemd_service() {
 
 }
 
+get_ssh_command() {
+  local OPT="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+  local SSH_LOCAL_PORT=${FS_TRAEFIK_PORT}
+  local SSH_REMOTE_PORT=${FS_TRAEFIK_PORT}
+  if [[ -n ${SSH_REMOTE_SERVER} ]]; then # if we want to not port forward to the login node but to another server
+    local ssh_command="ssh ${OPT} -N -L 127.0.0.1:${SSH_LOCAL_PORT}:${SSH_REMOTE_SERVER}:${SSH_REMOTE_PORT} -i ${FS_SSH_KEY_PATH} -4 ${FS_SSH_USER}@${FS_SSH_LOGIN_NODE}"
+  else
+    local ssh_command="ssh ${OPT} -N -L ${SSH_LOCAL_PORT}:127.0.0.1:${SSH_REMOTE_PORT} -i ${FS_SSH_KEY_PATH} -4 ${FS_SSH_USER}@${FS_SSH_LOGIN_NODE}"
+  fi  
+  echo "${ssh_command}"
+}
+
+check_ssh_keys() {
+  if [[ ! -f "${FS_SSH_KEY_PATH}" ]]; then
+    echo "Error: SSH key file ${FS_SSH_KEY_PATH} not found, generating key pair "
+    ssh-keygen -t ed25519 -f ${FS_SSH_KEY_PATH} -N ""
+    echo -e "Add this public key to the ~/.ssh/authorized_keys file on the SSH gateway / login node ${FS_SSH_LOGIN_NODE}:\n"
+    cat ${FS_SSH_KEY_PATH}.pub
+    echo -e "\nOnce this is done, hit any key to continue..."
+    read -n 1 -s
+  fi
+}
+
 # Call the functions
 if [[ "$SSH_CONFIG" == false ]]; then 
   create_folders_files
@@ -309,21 +343,22 @@ fi
 config_env
 
 if [[ "$SSH_CONFIG" == true ]]; then
-  get_systemd_content "/bin/bash ${FOREVER_ROOT}/sss.sh" \
-          "${FOREVER_ROOT}/.work/slurm-output" "SSH Forward Service"
-  setup_systemd_service "forever-slurm"  # This will create a service named "forever-traefik"
+  check_ssh_keys
+  # This will create a service named 'forever-ssh-forward"
+  setup_systemd_service "$(get_ssh_command)" \
+          "${FOREVER_ROOT}/.work/log" "SSH Forward Service" "forever-ssh-forward"  
   exit 0
 fi
 
 activate_services
 envsubst < traefik-static.toml  > "${FOREVER_ROOT}/.work/traefik-static.toml"
 
-get_systemd_content "${FOREVER_ROOT}/.work/traefik --configfile ${FOREVER_ROOT}/.work/traefik-static.toml" \
-          "${FOREVER_ROOT}/.work/log" "Traefik Proxy Service for Forever-SLURM"
-setup_systemd_service "forever-traefik"  # This will create a service named "forever-traefik"
+# This will create a service named "forever-traefik"
+setup_systemd_service "${FOREVER_ROOT}/.work/traefik --configfile ${FOREVER_ROOT}/.work/traefik-static.toml" \
+          "${FOREVER_ROOT}/.work/log" "Traefik Proxy Service for Forever-SLURM" "forever-traefik"
 
-get_systemd_content "/bin/bash ${FOREVER_ROOT}/forever-slurm.sh" \
-          "${FOREVER_ROOT}/.work/slurm-output" "Forever-SLURM Metadata Service"
-setup_systemd_service "forever-slurm"  # This will create a service named "forever-traefik"
+# This will create a service named "forever-traefik"
+setup_systemd_service "/bin/bash ${FOREVER_ROOT}/forever-slurm.sh" \
+          "${FOREVER_ROOT}/.work/slurm-output" "Forever-SLURM Metadata Service" "forever-slurm"
 
-
+echo -e "\n*** Installation complete. ***\n"

@@ -1,0 +1,30 @@
+http:
+  routers:
+    llama-cpp-server-router:
+      entryPoints:
+        - web
+      service: llama-cpp-server
+      rule: "PathPrefix(`/llama-cpp-server`)"
+      middlewares:
+        - retry
+        - strip-llama-cpp-server-prefix
+  middlewares:
+    retry:
+      retry:
+        attempts: 3
+        initialInterval: "500ms"
+    strip-llama-cpp-server-prefix:
+      stripPrefix:
+        prefixes:
+          - "/llama-cpp-server"
+  services:
+    llama-cpp-server:
+      loadBalancer:
+        healthCheck:
+          path: "/v1/models"
+          interval: "900s"
+          timeout: "1s"
+          status: "401"  # Consider 401 Unauthorized as healthy
+        servers:
+          - url: "http://xxxxx:12345"
+          - url: "http://yyyyy:54321"

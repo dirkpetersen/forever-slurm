@@ -1,0 +1,29 @@
+http:
+  routers:
+    a100-llama-cpp-server-router:
+      entryPoints:
+        - web
+      service: a100-llama-cpp-server
+      rule: "PathPrefix(`/a100-llama-cpp-server`)"
+      middlewares:
+        - retry
+        - strip-a100-llama-cpp-server-prefix
+  middlewares:
+    retry:
+      retry:
+        attempts: 3
+        initialInterval: "500ms"
+    strip-a100-llama-cpp-server-prefix:
+      stripPrefix:
+        prefixes:
+          - "/a100-llama-cpp-server"
+  services:
+    a100-llama-cpp-server:
+      loadBalancer:
+        healthCheck:
+          path: "/v1/models"
+          interval: "900s"
+          timeout: "1s"
+          status: "401"  # Consider 401 Unauthorized as healthy
+        servers:
+          - url: "http://xxxxx:12345"

@@ -1,0 +1,26 @@
+#! /bin/bash
+#SBATCH --job-name "llama-cpp-server"
+#SBATCH --time 1-00:00:00
+#SBATCH --cpus-per-task 8
+#SBATCH --mem 128G
+#SBATCH --partition gpu
+#SBATCH --gpus 2 
+#SBATCH --output llama-cpp-server.out
+
+# This Job needs at least 1, better 2 A40 GPUs to run
+
+# You need some more preparation to run a llama-cpp-server, 
+# check a100-llama-cpp-server.sub example for more details
+
+OPENAI_API_KEY=${OPENAI_API_KEY:-$(whoami)} # if empty use username
+SLURM_CPUS_ON_NODE=${SLURM_CPUS_ON_NODE:-1}
+THREADS=$(( ${SLURM_CPUS_ON_NODE} * 2 ))
+# nvidia-smi # for debugging
+host=$(hostname)
+port=$(${FOREVER_ROOT}/freeport.sh)
+scontrol update JobId=${SLURM_JOB_ID} Comment="traefik,${SLURM_JOB_NAME},http://${host}:${port}"
+
+python3 -m llama_cpp.server --api_key ${OPENAI_API_KEY} --cache true \
+ --host ${host} --port ${port} --n_gpu_layers -1 --n_threads ${THREADS} --n_ctx 32768 \
+ --chat_format chatml --verbose false --model_alias Meta-Llama-3.1-70B \
+ --model ./gguf/Meta-Llama-3.1-70B-Instruct.Q5_K_M.gguf

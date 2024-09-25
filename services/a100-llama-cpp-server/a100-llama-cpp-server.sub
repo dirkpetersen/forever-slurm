@@ -1,0 +1,52 @@
+#! /bin/bash
+#SBATCH --job-name "a100-llama-cpp-server"
+#SBATCH --time 1-00:00:00
+#SBATCH --cpus-per-task 8
+#SBATCH --mem 748G
+#SBATCH --partition a100 
+#SBATCH --gpus 6 
+#SBATCH --output a100-llama-cpp-server.out
+
+# This model requires at least 6 x A100 GPUs to run.
+
+OPENAI_API_KEY=${OPENAI_API_KEY:-$(whoami)} # if empty use username
+SLURM_CPUS_ON_NODE=${SLURM_CPUS_ON_NODE:-1}
+THREADS=$(( ${SLURM_CPUS_ON_NODE} * 2 ))
+# nvidia-smi # for debugging
+host=$(hostname)
+port=$(${FOREVER_ROOT}/freeport.sh)
+scontrol update JobId=${SLURM_JOB_ID} Comment="traefik,${SLURM_JOB_NAME},http://${host}:${port}"
+
+# You need some preparation for a llama-cpp-server:
+# 1. Download the model as a gguf file from https://huggingface.co/ 
+#    and change the --model path below
+# 2. Make sure you have G++ >= 13 and a CUDA environment installed
+# 3. Create a Python wheel and install it
+#    CMAKE_ARGS="-DGGML_CUDA=on" python3 -m pip install --upgrade llama-cpp-python[server]
+
+python3 -m llama_cpp.server --api_key ${OPENAI_API_KEY} --cache true \
+ --host ${host} --port ${port} --n_gpu_layers -1 --n_threads ${THREADS} --n_ctx 16384 \
+ --chat_format chatml --verbose false --model_alias Meta-Llama-3.1-405B \
+ --model ./gguf/Meta-Llama-3.1-405B-Instruct.Q8_0.gguf
+
+
+# In some cases the llama_cpp.server wheel will not compile on the first try.
+# However, we can use Pixi to create a conda environment with the correct dependencies.
+
+# cd /my/conda/environments
+# pixi init llama-cpp
+# cd llama-cpp
+# pixi add python=3.9 pip ipython gcc=13 gxx=13 cuda=12.6
+# pixi add --pypi openai
+# pixi shell
+#
+# CMAKE_ARGS="-DGGML_CUDA=on" python3 -m pip install --upgrade llama-cpp-python[server]
+
+# And then run the server with pixi inside the conda environment:
+
+#pixi run --manifest-path /my/conda/environments/llama-cpp/pixi.toml \
+# HOST=${host} python3 -m llama_cpp.server --api_key ${OPENAI_API_KEY} --cache true \
+# --host ${host} --port ${port} --n_gpu_layers -1 --n_threads ${THREADS} --n_ctx 16384 \
+# --chat_format chatml --verbose false --model_alias Meta-Llama-3.1-405B \
+# --model ./gguf/Meta-Llama-3.1-405B-Instruct.Q8_0.gguf
+

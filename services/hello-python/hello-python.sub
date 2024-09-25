@@ -1,0 +1,13 @@
+#! /bin/bash
+#SBATCH --job-name "hello-python"
+#SBATCH --time 1-00:00:00
+#SBATCH --cpus-per-task 1
+#SBATCH --mem 1
+#SBATCH --partition batch
+#SBATCH --output hello-python.out
+
+host=$(hostname)
+port=$(${FOREVER_ROOT}/freeport.sh)
+scontrol update JobId=${SLURM_JOB_ID} Comment="traefik,${SLURM_JOB_NAME},http://${host}:${port}"
+
+python3 ${FOREVER_ROOT}/.work/hello-python.py ${port}

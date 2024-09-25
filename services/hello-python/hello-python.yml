@@ -1,0 +1,30 @@
+http:
+  routers:
+    hello-python-router:
+      entryPoints:
+        - web
+      service: hello-python
+      rule: "PathPrefix(`/hello-python`)"
+      middlewares:
+        - retry
+        - strip-hello-python-prefix
+  middlewares:
+    retry:
+      retry:
+        attempts: 3
+        initialInterval: "500ms"
+    strip-hello-python-prefix:
+      stripPrefix:
+        prefixes:
+          - "/hello-python"
+  services:
+    hello-python:
+      loadBalancer:
+        healthCheck:
+          path: "/test"
+          interval: "900s"
+          timeout: "1s"
+          #status: "401"  # Consider 401 Unauthorized as healthy
+        servers:
+          - url: "http://xxxxx:12345"
+          - url: "http://yyyyy:54321"
