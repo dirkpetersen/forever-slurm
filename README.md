@@ -1,6 +1,6 @@
 # Forever Slurm
 
-Use the Traefik proxy to keep (web) services highly available on Slurm-managed HPC clusters. (Web) services run as Slurm batch jobs that end when time expires, so user requests may fail unless other jobs take over. Traefik provides load balancing and failover for multiple identitical Slurm jobs. Since port numbers may vary across nodes, we use random ports stored in the Slurm job's comment field, enabling simple service discovery without the need for extra complex message queue or service discovery software.
+Use the Traefik proxy to keep (web) services highly available on Slurm-managed HPC clusters. (Web) services run as Slurm batch jobs that end when time expires, so user requests may fail unless other jobs take over. Traefik provides load balancing and failover for multiple identitical Slurm jobs. Since port numbers may vary across nodes, we use random ports stored in the Slurm job's comment field, enabling simple service discovery without the need for extra complex message queue or service discovery software. Please also check this [background article on Medium](https://dirk-petersen.medium.com/run-web-services-on-hpc-stupid-63e208008da8)
 
 ## What does this look like ?
 
@@ -39,7 +39,7 @@ Which services do you want to add?
 ```
 and enter at least 2 instances for the question that follows.
 
-After that forever-slurm launches 2 user level system services and you can check the output files to verify everything is working 
+After that forever-slurm launches 2 user level systemd services and you can check the output files to verify everything is working 
 
 ```
 tail ./forever-slurm/.work/log/traefik.log
