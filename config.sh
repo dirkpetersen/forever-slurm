@@ -9,14 +9,14 @@ if [[ ! -d "$(pwd)/.git" ]]; then
 fi
 
 MYUID=$(id -u)
-if [[ $MYUID -eq 0 ]]; then
-  echo "Error: This script should not be run as root. Please run this to create a new user:"
-  echo "useradd <username> && loginctl enable-linger <username> && su - <username>"
+if [[ ${MYUID} -eq 0 ]]; then
+  echo "Error: This script should not be run as root. Please run this to create and switch to a new user:"
+  echo 'NEWUSER=<username> && useradd $NEWUSER && loginctl enable-linger $NEWUSER && su - $NEWUSER'
   exit 1
 fi
 if [[ ! -d /run/user/${MYUID} ]]; then
   echo "Error: Folder /run/user/${MYUID} does not exist."
-  echo "Please run: sudo loginctl enable-linger $USER"
+  echo "Please run: sudo loginctl enable-linger ${USER}"
   exit 1
 fi
 

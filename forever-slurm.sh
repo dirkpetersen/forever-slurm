@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # Directory of the script
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export DBUS_SESSION_BUS_ADDRESS=${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/$(id -u)/bus}
 export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
 export FOREVER_ROOT=${FOREVER_ROOT:-${SCRIPT_DIR}}
 
 # Source .env file from the same directory
-if [[ -f "${FOREVER_ROOT}/.env" ]]; then
-  source "${FOREVER_ROOT}/.env"
+if [[ -f "${FOREVER_ROOT}/.env" ]]; then  
   # Export all vars as environment vars
   set -a  # Automatically export all variables
   source "${FOREVER_ROOT}/.env"
@@ -25,7 +25,7 @@ FS_SLEEP_INTERVAL=${FS_SLEEP_INTERVAL:-300}
 #FS_SLEEP_INTERVAL=${FS_SLEEP_INTERVAL:-60}
 
 
-# Log to journal (can be viewed with journalctl)
+# output log 
 log() {
   echo "$(date '+%Y-%m-%d %H:%M:%S') - $1"
 }
