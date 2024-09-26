@@ -1,0 +1,17 @@
+[entryPoints]
+  [entryPoints.web]
+    address = ":${FS_TRAEFIK_PORT}"
+
+[api]
+  dashboard = true
+  insecure = true
+
+[providers.file]
+  directory = "${FOREVER_ROOT}/.work/traefik-watch"
+  watch = true
+
+[log]
+  level = "DEBUG"
+  filePath = "${FOREVER_ROOT}/.work/log/traefik.log"
+
+
