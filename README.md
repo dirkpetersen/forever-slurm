@@ -14,11 +14,11 @@ flowchart TD
     end
 ```
 
-Traefik simply runs as a --user systemd service on the login node and the web server can either connect directly to the Traefik proxy or use a simple ssh port forwarding tunnel to the HPC login node 
+Traefik simply runs as a --user systemd service on the login node, and the web server can either connect directly to the Traefik proxy or use a simple ssh port forwarding tunnel to the HPC login node 
 
 ## Install / Config
 
-login to your HPC system (login-node), clone the forever-slurm repository (either via git or if you don't have keys setup in github use https `git clone https://github.com/dirkpetersen/forever-slurm`) and run config.sh
+login to your HPC system (login-node), clone the forever-slurm repository (either via git or if you don't have keys setup in github, use https `git clone https://github.com/dirkpetersen/forever-slurm`) and run config.sh
 
 ```
 git clone git@github.com:dirkpetersen/forever-slurm.git
@@ -26,7 +26,7 @@ cd forever-slurm
 ./config.sh 
 ```
 
-This will have Traefik listen on the port you select (default: 13013) and configure your environment under forever-slurm/.work. For testing make sure you pick the hello-python service here :
+This will have Traefik listen on the port you select (default: 13013) and configure your environment under forever-slurm/.work. For testing, make sure you pick the hello-python service here:
 
 ```
 Which services do you want to add?
@@ -39,7 +39,7 @@ Which services do you want to add?
 ```
 and enter at least 2 instances for the question that follows.
 
-After that forever-slurm launches 2 user level systemd services and you can check the output files to verify everything is working 
+After that forever-slurm launches 2 user level systemd services, and you can check the output files to verify everything is working 
 
 ```
 tail ./forever-slurm/.work/log/traefik.log
@@ -61,15 +61,15 @@ Transfer-Encoding: chunked
 
 Hello, Python from xnode-11-5:37422 ! You accessed: http://10.96.39.11:37422/tests
 ```
-Each time you run it you should see a different node hostname and port. This is the Traefik load balancer at work.
+Each time you run it, you should see a different node hostname and port. This is the Traefik load balancer at work.
 
 ### Configuring a Llama LLM inference server
 
-One of the best use cases for forever-slurm is running a number of large language model (LLM) inference servers, for example as a backbone for your own on-premises ChatGPT. The Slurm submission script `./services/a100-llama-cpp-server/a100-llama-cpp-server.sub` has detailed instructions on how to install the pre-requisites for llama-cpp-python
+One of the best use cases for forever-slurm is running a number of large language model (LLM) inference servers, for example as a backbone for your own on-premises ChatGPT clone. The Slurm submission script `./services/a100-llama-cpp-server/a100-llama-cpp-server.sub` has detailed instructions on how to install the pre-requisites for llama-cpp-python.
 
 ## Setting up new compute services 
 
-The folder `./forever-slurm/services` has a number of examples that you can activate. Each folder represents a service name that, if installed, you can reach via url, e.g. `http://127.0.0.1:13013/my-service-name/v1/blabla`. Minimally a service requires an HPC (Slurm) job script (bash, python, etc) that must have an extension *.sub and a Traefik service configuration file that must have the extension *.yml. Other rules that apply: 
+The folder `./forever-slurm/services` has a number of examples that you can activate. Each folder represents a service name that, if installed, you can reach via url, e.g. `http://127.0.0.1:13013/my-service-name/v1/blabla`. Minimally, a service requires an HPC (Slurm) job script (bash, python, etc) that must have an extension *.sub and a Traefik service configuration file that must have the extension *.yml. Other rules that apply: 
 
 * A service name in either file cannot have any spaces, just hyphens
 * Both file names need to start with the service name but can have extra characters, e.g. hello-python-yada.sub or hello-python-aah.yml
@@ -91,13 +91,13 @@ You can also check the status of the 2 systemd services installed by ./config.sh
 systemctl --no-pager --user status forever-slurm forever-traefik
 ```
 
-When you run `./config.sh` the required environment variables will be copied from file .env.default to .env and you are prompted to confirm or edit each value. The variable SERVICE_LIST defines all active services and the number of instances that are expected to run. forever-slurm will continue to submit jobs until the total number of running and pending jobs is equal to the number behind the forward slash.
+When you run `./config.sh`, the required environment variables will be copied from file .env.default to .env, and you are prompted to confirm or edit each value. The variable SERVICE_LIST defines all active services and the number of instances that are expected to run. forever-slurm will continue to submit jobs until the total number of running and pending jobs is equal to the number behind the forward slash.
 
 ```
 SERVICE_LIST: "hello-python/2 llama-cpp-server/2 a100-llama-cpp-server/1"
 ```
 
-If you have a new compute service please add it to the services folder send me a pull request so others can benefit from your work. 
+If you have a new compute service, please fork the repository, add your service it to the services folder, and open a pull request so others can benefit from your work. 
 
 
 ## Setup an SSH tunnel / port forward 
@@ -106,13 +106,13 @@ If you cannot reach the Traefik port on the HPC login node from the frontend web
 
 Login to your frontend web server and switch to the user account you would like to have port forwarding run under (not root)
 
-Clone the forever-slurm respository just like above, cd to forever-slurm and then run: 
+Clone the forever-slurm respository just like above, cd to forever-slurm, and then run: 
 
 ```
 ./config.sh --ssh
 ```
 
-After answering a few questions (e.g. what is the host name of your HPC login node and the username for that node) you will be asked to add a public key on your HPC login node BEFORE hitting any key.
+After answering a few questions (e.g. what is the host name of your HPC login node and the username for that node), you will be asked to add a public key on your HPC login node BEFORE hitting any key.
 
 If you run into issues check 
 
@@ -126,7 +126,7 @@ You can always check the status of the systemd service:
 systemctl --no-pager --user status forever-ssh-forward
 ```
 
-In some cases, systemctl commands may not work, for example if you switched to the current account from another account (`su -`), make sure that DBUS_SESSION_BUS_ADDRESS is set, you might have to add the below to the ~/.bashrc of the service account where you install forever-slurm 
+In some cases, systemctl commands may not work, for example, if you switched to the current account from another account (`su -`), make sure that DBUS_SESSION_BUS_ADDRESS is set. You might have to add the below to the ~/.bashrc of the service account where you install forever-slurm 
 
 ```
 export DBUS_SESSION_BUS_ADDRESS=${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/$(id -u)/bus}
