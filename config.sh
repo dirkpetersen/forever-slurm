@@ -10,7 +10,8 @@ fi
 
 MYUID=$(id -u)
 if [[ ! -d /run/user/${MYUID} ]]; then
-  echo "Error: Folder /run/user/${MYUID} does not exist. Please run: sudo loginctl enable-linger $USER"
+  echo "Error: Folder /run/user/${MYUID} does not exist."
+  echo "Please run: sudo loginctl enable-linger $USER"
   exit 1
 fi
 

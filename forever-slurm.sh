@@ -3,6 +3,7 @@
 # Directory of the script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export DBUS_SESSION_BUS_ADDRESS=${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/$(id -u)/bus}
+export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
 export FOREVER_ROOT=${FOREVER_ROOT:-${SCRIPT_DIR}}
 
 # Source .env file from the same directory
