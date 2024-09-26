@@ -341,8 +341,8 @@ check_ssh_keys() {
     echo "Error: SSH key file ${FS_SSH_KEY_PATH} not found, generating key pair "
     ssh-keygen -t ed25519 -f ${FS_SSH_KEY_PATH} -N ""
     chmod 600 ${FS_SSH_KEY_PATH}.pub
-    echo -e "Add this public key to the ~/.ssh/authorized_keys file on the SSH gateway / login node ${FS_SSH_LOGIN_NODE}:\n"
-    cat ${FS_SSH_KEY_PATH}.pub
+    echo -e "Add this public key to the ~/.ssh/authorized_keys file on the SSH gateway / login node ${FS_SSH_LOGIN_NODE}. Run command:"
+    echo "echo \"$(cat ${FS_SSH_KEY_PATH}.pub)\"  >> ~/.ssh/authorized_keys"
     echo -e "\nOnce this is done, hit any key to continue..."
     read -n 1 -s
   fi
