@@ -126,8 +126,9 @@ You can always check the status of the systemd service:
 systemctl --no-pager --user status forever-ssh-forward
 ```
 
-In some cases, systemctl commands may not work, for example, if you switched to the current account from another account (`su -`), make sure that DBUS_SESSION_BUS_ADDRESS is set. You might have to add the below to the ~/.bashrc of the service account where you install forever-slurm 
+In some cases, systemctl commands may not work, for example, if you switched to the current account from another account (`su -`), make sure that environment vars DBUS_SESSION_BUS_ADDRESS and XDG_RUNTIME_DIR are set. You might have to add the below to the ~/.bashrc of the service account where you install forever-slurm 
 
 ```
 export DBUS_SESSION_BUS_ADDRESS=${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/$(id -u)/bus}
+export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
 ```

@@ -8,7 +8,14 @@ if [[ ! -d "$(pwd)/.git" ]]; then
   exit 1
 fi
 
-export DBUS_SESSION_BUS_ADDRESS=${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/$(id -u)/bus}
+MYUID=$(id -u)
+if [[ ! -d /run/user/${MYUID} ]]; then
+  echo "Error: Folder /run/user/${MYUID} does not exist. Please run: sudo loginctl enable-linger $USER"
+  exit 1
+fi
+
+export DBUS_SESSION_BUS_ADDRESS=${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/${MYUID}/bus}
+export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/${MYUID}}
 export FOREVER_ROOT=${FOREVER_ROOT:-$(pwd)}  # Normally the root of the forever-slurm git repo
 SYSTEMD_SERVICE_CONTENT=""
 
