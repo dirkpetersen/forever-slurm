@@ -1,10 +1,13 @@
 #! /bin/bash
 #SBATCH --job-name "hello-python"
-#SBATCH --time 1-00:00:00
+#SBATCH --time 0-08:00:00    # 8 hours
 #SBATCH --cpus-per-task 1
 #SBATCH --mem 1
-#SBATCH --partition batch
 #SBATCH --output hello-python.out
+## #SBATCH --partition batch # Use the right partiton
+## #SBATCH --account myteam  # you might have to specify an account
+## #SBATCH --qos preempt     # if your sysadmin has preemption enabled
+## #SBATCH --requeue         # resubmit automatically after preemption
 
 host=$(hostname)
 port=$(${FOREVER_ROOT}/freeport.sh)

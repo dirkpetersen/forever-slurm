@@ -139,11 +139,17 @@ config_env() {
       if [[ "$KEY" == FS_SSH* && "$SSH_CONFIG" == false ]]; then
         # Write the original line to the file without prompting
         echo "${KEY}=${VALUE}" >> "${ENV_TMP_FILE}"
+        COMMENTS=""
         continue
       fi
 
+      # Show accumulated comments as a caption before prompting
+      if [[ -n "$COMMENTS" ]]; then
+        echo -e "${COMMENTS}"
+      fi      
+
       # Prompt the user with the default value
-      read -e -i "${VALUE}" -p "Enter value for ${KEY}: " NEW_VALUE </dev/tty
+      read -e -i "${VALUE}" -p "Enter or edit ${KEY}: " NEW_VALUE </dev/tty
 
       # Add an empty line in the terminal after the prompt
       echo ""
@@ -341,7 +347,7 @@ check_ssh_keys() {
     echo "Error: SSH key file ${FS_SSH_KEY_PATH} not found, generating key pair "
     ssh-keygen -t ed25519 -f ${FS_SSH_KEY_PATH} -N ""
     chmod 600 ${FS_SSH_KEY_PATH}.pub
-    echo -e "Add this public key to the ~/.ssh/authorized_keys file on the SSH gateway / login node ${FS_SSH_LOGIN_NODE}. Run command:"
+    echo -e "Add this public key to the ~/.ssh/authorized_keys file on the SSH gateway / login node ${FS_SSH_LOGIN_NODE}. Run command:\n"
     echo "echo \"$(cat ${FS_SSH_KEY_PATH}.pub)\"  >> ~/.ssh/authorized_keys"
     echo -e "\nOnce this is done, hit any key to continue..."
     read -n 1 -s
